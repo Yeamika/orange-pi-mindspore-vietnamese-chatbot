@@ -1,6 +1,0 @@
-[submodule "Model/Qwen1.5-0.5B-Chat"]
-	path = Model/Qwen1.5-0.5B-Chat
-	url = https://modelers.cn/yaemika/Qwen1.5-0.5B-Chat.git
-[submodule "Model/Lora-Tach"]
-	path = Model/Lora-Tach
-	url = https://modelers.cn/yaemika/vietnamese-chatbot.git

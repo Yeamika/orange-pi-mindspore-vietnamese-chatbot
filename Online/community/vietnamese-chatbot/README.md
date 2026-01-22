@@ -25,14 +25,15 @@
 ## 目录结构
 
 ```
-KFB/
+vietnamese-chatbot/
 ├── 01_environment_setup.ipynb          # 环境配置、数据集下载、LlamaFactory 安装
 ├── 02_data_processing_and_training.ipynb  # 数据格式转换、模型训练
 ├── 03_inference_cuda.ipynb             # NVIDIA GPU + PyTorch 推理
 ├── 04_inference_mindspore.ipynb        # 昇腾 AI + MindSpore 推理
 ├── Model/
 │   ├── Qwen1.5-0.5B-Chat/              # 基础模型
-│   ├── lora-train_2026-01-07-16-29-48/ # LoRA 适配器
+│   ├── Vietnamese-LoRA-Only/           #  训练后的LoRA 适配器
+│   ├── lora-train_2026-01-07-16-29-48/ #  本地训练后的LoRA 适配器
 │   └── Lora-Tach/                      # 合并后的模型
 └── TargetData/
     ├── raw/.../vi.jsonl                # 原始越南语数据
@@ -45,27 +46,16 @@ KFB/
 
 ### 环境要求
 
-**训练服务器**
-- NVIDIA GPU (Tesla V100 推荐)
-- Python 3.11+
-- PyTorch 2.9.1+cu126
-- CUDA 12.6
-- transformers 4.57.1
-- peft 0.17.1
-- LlamaFactory 0.9.5.dev0
 
 **推理端：香橙派AIpro 16G 8T 昇腾310**
 - Python 3.10+
 - MindSpore 2.6.0
-- MindNLP 0.4.1
+- MindSpore NLP 0.4.1
 - CANN 8.1.RC1
 
 ### 安装依赖
 
 ```bash
-# CUDA 版本
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
-pip install transformers peft
 
 # MindSpore 版本
 pip install mindspore==2.6.0 mindnlp==0.4.1
@@ -127,13 +117,13 @@ llamafactory-cli webui
 - 学习率：5e-5 ~ 1e-4
 - 训练轮数：3-5 epochs
 - 最大序列长度：512-1024
-
+![alt text](training_loss.png)
 ## 推理部署
 
 
-### MindSpore 推理 (`04_inference_mindspore.ipynb`)
+### MindSpore 推理 (`03_inference_mindspore.ipynb`)
 
-适用于昇腾 AI 平台（如香橙派AIPRO），使用 MindSpore + MindNLP。
+适用于昇腾 AI 平台（如香橙派AIPRO），使用 MindSpore + MindSpore NLP。
 
 ```python
 from mindnlp.transformers import AutoModelForCausalLM, AutoTokenizer
@@ -157,7 +147,7 @@ Bot> Tục thờ cúng tổ tiên có nguồn gốc từ nền kinh tế nông n
 
 ## 项目特点
 
-- ✅ 多平台支持：同时支持 NVIDIA GPU 和昇腾 AI
+- ✅ 昇腾平台支持：支持昇腾AI 如香橙派AIPRO
 - ✅ 参数高效微调：使用 LoRA 技术，降低训练成本
 - ✅ 流式推理：支持实时 token 输出，提升交互体验
 - ✅ 对话历史管理：支持多轮对话上下文
