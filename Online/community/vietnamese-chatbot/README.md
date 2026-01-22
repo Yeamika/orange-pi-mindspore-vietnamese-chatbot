@@ -18,8 +18,7 @@
 | 微调方法 | LoRA (Low-Rank Adaptation) |
 | 训练框架 | LlamaFactory |
 | 训练数据 | 万卷丝绸数据集越南语部分 (~23,000 条) |
-| MindSpore 推理 | MindSpore 2.6.0 + MindNLP 0.4.1 |
-| CUDA 推理 | PyTorch 2.9.1 + transformers + PEFT |
+| MindSpore 推理 | MindSpore 2.6.0 + MindSpore NLP 0.4.1 |
 
 
 ## 目录结构
@@ -28,19 +27,21 @@
 vietnamese-chatbot/
 ├── 01_environment_setup.ipynb          # 环境配置、数据集下载、LlamaFactory 安装
 ├── 02_data_processing_and_training.ipynb  # 数据格式转换、模型训练
-├── 03_inference_cuda.ipynb             # NVIDIA GPU + PyTorch 推理
-├── 04_inference_mindspore.ipynb        # 昇腾 AI + MindSpore 推理
-├── Model/
+├── 03_inference_mindspore.ipynb        # 昇腾 AI + MindSpore 推理
+├── README.md                           # 项目说明文档
+├── Model/                              # (需要下载) 模型文件目录
 │   ├── Qwen1.5-0.5B-Chat/              # 基础模型
 │   ├── Vietnamese-LoRA-Only/           #  训练后的LoRA 适配器
 │   ├── lora-train_2026-01-07-16-29-48/ #  本地训练后的LoRA 适配器
 │   └── Lora-Tach/                      # 合并后的模型
-└── TargetData/
+└── TargetData/                         # (需要下载与转换) WanJuanSiLu2O 数据集
     ├── raw/.../vi.jsonl                # 原始越南语数据
     └── processed/dialogue_format/
         ├── train.json                  # 训练集 (20,699 条)
         └── val.json                    # 验证集 (2,300 条)
 ```
+
+
 
 ## 快速开始
 
@@ -120,19 +121,48 @@ llamafactory-cli webui
 ![alt text](training_loss.png)
 ## 推理部署
 
+## Model 模块说明
+
+本目录包含项目使用的模型文件，已上传至 modelers 社区。
+
+### Qwen1.5-0.5B-Chat
+- **Git 地址**: https://modelers.cn/yaemika/Qwen1.5-0.5B-Chat.git
+- **访问地址**: https://modelers.cn/models/yaemika/Qwen1.5-0.5B-Chat
+- **说明**: Qwen1.5 0.5B 对话模型，作为基础模型使用
+- **大小**: ~1.2 GB
+- **文件**: model.safetensors, tokenizer 配置等
+
+### Lora-Tach
+- **Git 地址**: https://modelers.cn/yaemika/vietnamese-chatbot.git
+- **访问地址**: https://modelers.cn/models/yaemika/vietnamese-chatbot
+- **说明**: 基于 Qwen 微调的越南语对话模型（已合并）
+- **大小**: ~900 MB
+- **文件**: model.safetensors, tokenizer 配置等
+
+### Vietnamese-LoRA-Only
+- **Git 地址**: https://modelers.cn/yaemika/Vietnamese-LoRA-Only.git
+- **访问地址**: https://modelers.cn/models/yaemika/Vietnamese-LoRA-Only
+- **说明**: Vietnamese LoRA 适配器模型（独立版本）
+- **大小**: ~15 MB
+- **文件**: adapter_model.safetensors, adapter_config.json, tokenizer 配置等
+
+### lora-train_2026-01-07-16-29-48
+- **说明**: 本地训练输出的 LoRA adapter
+- **状态**: 已上传至 modelers.cn (Vietnamese-LoRA-Only)
 
 ### MindSpore 推理 (`03_inference_mindspore.ipynb`)
 
-适用于昇腾 AI 平台（如香橙派AIPRO），使用 MindSpore + MindSpore NLP。
-
+- 适用于昇腾 AI 平台，使用 MindSpore + MindSpore NLP。
+- 在香橙派AIpro 16G 8T，**MindSpore**2.6.0+**MindSpore NLP**0.4.1验证通过
 ```python
 from mindnlp.transformers import AutoModelForCausalLM, AutoTokenizer
 from mindnlp.peft import PeftModel
 
 # 加载基础模型和 LoRA 适配器
-tokenizer = AutoTokenizer.from_pretrained("./Model/Qwen1.5-0.5B-Chat")
-model = AutoModelForCausalLM.from_pretrained("./Model/Qwen1.5-0.5B-Chat")
-lora_model = PeftModel.from_pretrained(model, "./Model/lora-train_xxx")
+tokenizer = AutoTokenizer.from_pretrained("yaemika/Qwen1.5-0.5B-Chat",mirror="modelers", ms_dtype=mindspore.float16)
+omodel = AutoModelForCausalLM.from_pretrained("yaemika/Qwen1.5-0.5B-Chat", mirror="modelers", ms_dtype=mindspore.float16)
+lora_path = "./Model/Vietnamese-LoRA-Only"
+loramodel = PeftModel.from_pretrained(omodel, lora_path)
 ```
 
 ### 对话示例
@@ -147,7 +177,7 @@ Bot> Tục thờ cúng tổ tiên có nguồn gốc từ nền kinh tế nông n
 
 ## 项目特点
 
-- ✅ 昇腾平台支持：支持昇腾AI 如香橙派AIPRO
+- ✅ 昇腾平台支持：支持昇腾AI， 香橙派AIpro 16G 8-12T开发板
 - ✅ 参数高效微调：使用 LoRA 技术，降低训练成本
 - ✅ 流式推理：支持实时 token 输出，提升交互体验
 - ✅ 对话历史管理：支持多轮对话上下文
